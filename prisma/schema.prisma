@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  clerkId   String    @unique
+  email     String    @unique
+  name      String?
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  language  String
+  rawCode   String   @db.Text
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review?
+
+  @@index([userId])
+}
+
+model Review {
+  id             String          @id @default(cuid())
+  sessionId      String          @unique
+  diagnosis      String          @db.Text
+  fixedCode      String          @db.Text
+  explanation    String          @db.Text
+  suggestions    Json
+  lineReferences Json
+  createdAt      DateTime        @default(now())
+  session        Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  scoreBreakdown ScoreBreakdown?
+}
+
+model ScoreBreakdown {
+  id                String   @id @default(cuid())
+  reviewId          String   @unique
+  accuracy          Int
+  clarity           Int
+  completeness      Int
+  hallucinationRisk Int
+  overall           Int
+  reasoning         String   @db.Text
+  ruleFlags         Json?
+  createdAt         DateTime @default(now())
+  review            Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
